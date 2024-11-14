@@ -2,32 +2,32 @@ import cryptomath, random, hashlib
 
 # n has to be greater than m otherwise lossy message
 class Signer:
-    
+
     def __init__(self):
         self.publicKey, self.privateKey = (self.generateInformation())
-    
-    
+
+
     def generateInformation(self):
         # Generates public and private keys
         p = cryptomath.findPrime()
         q = cryptomath.findPrime()
         phi = (p - 1)*(q - 1)
         n = p*q
-        
-        print('\n\n') 
+
+        print('\n\n')
         for i in range(40):
             print(" ", end="")
         print("\u001b[1mBlind Signatures and Voting Scheme (using RSA)\u001b[0m")
         for i in range(100):
             print("-", end="")
-        print()    
+        print()
         for i in range(50):
             print(" ", end="")
         print("\u001b[31mMODULE 1\u001b[37m")
         for i in range(100):
             print("-", end="")
-        print('\n\n')    
-      
+        print('\n\n')
+
         print("\u001b[32;1m1. Signing Authority Creates Public and Private Information:\u001b[0m", end='\n\n')
         print("\u001b[35;1m(a) Generates random p and q\u001b[0m", end='\n\n')
         print("\u001b[33;1mp: \u001b[0m", p, end='\n\n')
@@ -35,16 +35,16 @@ class Signer:
         print("\u001b[35;1m(b) Computes n=p*q and ϕ(n)=(p-1)(q-1)\u001b[0m", end='\n\n')
         print("\u001b[33;1mn: \u001b[0m", n, end='\n\n')
         print("\u001b[33;1mϕ(n): \u001b[0m", phi, end='\n\n')
-    
-    
+
+
         print("\u001b[35;1m(c) Picks e such that gcd(ϕ(n),e)=1 & 1<e<ϕ(n):\u001b[0m", end='\n\n')
-        
+
         foundEncryptionKey = False
         while not foundEncryptionKey:
             e = random.randint(2, phi - 1)
             if cryptomath.gcd(e, phi) == 1:
                 foundEncryptionKey = True
-                    
+
         print("\u001b[33;1me: \u001b[0m", e, end='\n\n')
 
         print("\u001b[33;1mChecking whether gcd(e, ϕ)==1: \u001b[0m")
@@ -55,41 +55,41 @@ class Signer:
         print("Verification Status: ", v, "\u001b[0m", end='\n\n')
         print("\u001b[35;1m(d) Computes d, where d is the inverse of e modulo ϕ(n)\u001b[0m", end='\n\n')
         d = cryptomath.findModInverse(e, phi)
-       
-        
+
+
         print("\u001b[33;1md: \u001b[0m",d, end='\n\n')
-        
+
         print("\u001b[33;1mChecking whether e*d mod ϕ(n) is 1 (which is the required condition for d to be inverse of e mod ϕ(n)): \u001b[0m")
         print(e, "*", d, "mod", phi,'\n' ,"=", e*d % phi, end='\n')
         v=False
         if (e*d % phi)==1:
             v=True
         print("\u001b[33;1mVerification Status: \u001b[0m", v, end='\n\n')
-        
+
         print("\u001b[35;1m(e) Publishes to PUBLIC: (n,e) and the public and private keys calculated respectively are:\u001b[0m", end='\n\n')
         print("\u001b[33;1mPublic Key (n, e): \u001b[0m", "(",n,", " ,e,")", end='\n\n')
         print("\u001b[33;1mPrivate Key (n, d):  \u001b[0m", "(",n,", " ,d,")", end='\n\n')
         publicInfo = {"n" : n, "e": e}
         privateInfo = {"n" : n, "d": d}
-    
+
         return[(publicInfo),(privateInfo)]
-        
+
     def getPublicKey(self):
         return self.publicKey
-    
+
     def signMessage(self, message, eligible):
-        
+
         print('\n\n')
         for i in range(100):
             print("-", end="")
-        print()    
+        print()
         for i in range(50):
             print(" ", end="")
         print("\u001b[31mMODULE 3\u001b[37m")
         for i in range(100):
             print("-", end="")
-        print('\n\n')   
-        
+        print('\n\n')
+
         print("\u001b[32;1m3. Signing Authority Authorizes Ballot\u001b[0m", end='\n\n')
         print("\u001b[35;1m(a) Signing authority receives m'\u001b[0m", end='\n\n')
         print("\u001b[35;1m(b) Signing authority verifies whether voter is eligible to vote\u001b[0m", end='\n\n')
@@ -101,20 +101,20 @@ class Signer:
             return s
         else:
             return None
-        
+
     def verifyVoter(self, eligible):
         pass
-        
- 
+
+
 class Voter:
-    
+
     def __init__(self, n, eligible):
         self.eligible = eligible
-        
+
         print("\u001b[35;1m(d) Generates r such that r is a relative prime n and 2<= r <=(n-1)\u001b[0m", end='\n\n')
         foundR = False
         while not foundR:
-            self.r = random.randint(2, n - 1)       
+            self.r = random.randint(2, n - 1)
             if cryptomath.gcd(self.r, n) == 1:
                 print("\u001b[33;1mr: \u001b[0m", self.r, end='\n\n')
                 foundR = True
@@ -123,13 +123,13 @@ class Voter:
         v=False
         if cryptomath.gcd(self.r, n)==1:
             v=True
-        print("Verification Status: ", v, "\u001b[0m", end='\n\n')        
-    
+        print("Verification Status: ", v, "\u001b[0m", end='\n\n')
+
     def unwrapSignature(self, signedBlindMessage, n):
         print('\n\n')
         for i in range(100):
             print("-", end="")
-        print()    
+        print()
         for i in range(50):
             print(" ", end="")
         print("\u001b[31mMODULE 4\u001b[37m")
@@ -138,12 +138,12 @@ class Voter:
         print('\n\n')
         print("\u001b[32;1m4. Voter Unwraps Blinding of Ballot\u001b[0m", end='\n\n')
         print("\u001b[35;1m(a) Receives s'\u001b[0m", end='\n\n')
-        
+
         print("\u001b[35;1m(g) Computes rInv, where rInv is the inverse of r modulo n. r will be used by voter to unwrap the blinded message.\u001b[0m", end='\n\n')
         rInv = cryptomath.findModInverse(self.r, n) # ERR3
         print("rInv: ", rInv)
-         
-        print()    
+
+        print()
         print("\u001b[33;1mChecking whether r * rInv mod n is 1 (which is the required condition for rInv to be inverse of r mod n): \u001b[0m")
         print(self.r, "*", rInv, "mod", n,'\n' ,"=", self.r*rInv % n, end='\n')
         v=False
@@ -155,19 +155,19 @@ class Voter:
         print("\u001b[33;1mSigned message, s: \u001b[0m", s, end='\n\n')
         print("\u001b[35;1m(c) Sends the signature s in to the ballot receiving location\u001b[0m", end='\n\n')
         return s
-    
-    
+
+
     def blindMessage(self, m, n, e):
          print("\u001b[35;1m(e) Computes blinded message (disguises his message): m' = (m* (r^e)) mod n (where n and e are public knowledge)\u001b[0m", end='\n\n')
          blindMessage = (m * pow(self.r, e, n)) % n  #returns r to the power of e, modulus n.
          print("\u001b[33;1mBlind Message: \u001b[0m", blindMessage)
          return blindMessage
-         
-    
+
+
     def getEligibility(self):
         return self.eligible
 
-    
+
 def verifySignature(message, randNum, signature, publicE, publicN):
     ballot= pow(signature, publicE, publicN) #decrypting, it gets back the message_hash
     verificationStatus = (int(hashlib.sha256((str(message) + str(randNum)).encode('utf-8')).hexdigest(),16) == ballot)
