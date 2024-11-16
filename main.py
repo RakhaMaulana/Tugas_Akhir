@@ -4,11 +4,6 @@ import random
 import cryptomath
 import sqlite3
 
-yell = '\u001b[33;1m'
-reset = '\u001b[0m'
-red = '\u001b[31m'
-pink = '\u001b[35;1m'
-
 class poll:
     def __init__(self):
         self.signer = bs.Signer()
@@ -17,12 +12,40 @@ class poll:
         self.n = self.publicKey['n']
         self.e = self.publicKey['e']
 
-    def poll_response(self, poll_answer, id_number):
-        if id_number == 0:
-            id_number = "n"
-        elif id_number == 1:
-            id_number = "y"
+    def get_db_connection(self):
+        """Create a new database connection."""
+        conn = sqlite3.connect('voting.db')
+        return conn
 
+    def is_valid_voter(self, id_number):
+        """Memeriksa apakah ID terdaftar dan belum memberikan suara"""
+        conn = self.get_db_connection()
+        c = conn.cursor()
+        c.execute('SELECT has_voted FROM voters WHERE id_number = ?', (id_number,))
+        result = c.fetchone()
+        conn.close()
+        if result is None:
+            print("ID number tidak terdaftar.")
+            return False
+        elif result[0]:
+            print("ID number sudah melakukan voting.")
+            return False
+        return True
+
+    def mark_voter(self, id_number):
+        """Menandai ID sebagai telah memberikan suara"""
+        conn = self.get_db_connection()
+        c = conn.cursor()
+        c.execute('UPDATE voters SET has_voted = 1 WHERE id_number = ?', (id_number,))
+        conn.commit()
+        conn.close()
+
+    def poll_response(self, poll_answer, id_number):
+        # Validasi ID number
+        if not self.is_valid_voter(id_number):
+            return "ID number tidak valid atau sudah digunakan untuk voting."
+
+        # Jika ID valid, lanjutkan dengan proses voting
         print('\n\n')
         for i in range(100):
             print("-", end="")
@@ -42,7 +65,7 @@ class poll:
         print("\u001b[35;1m(b) Voter chooses favorite candidate, option, etc. on ballot\u001b[0m", end='\n\n')
         message = poll_answer
         print("\u001b[33;1mpoll_answer: \u001b[0m", poll_answer, end="\n\n")
-        print("\u001b[35;1m(c) Creates (concatenating) message: poll_answer + x and produces it's hash\u001b[0m", end='\n\n')
+        print("\u001b[35;1m(c) Creates (concatenating) message: poll_answer + x and produces its hash\u001b[0m", end='\n\n')
         concat_message = str(message) + str(x)
         print("\u001b[33;1mConcatenated message: \u001b[0m", concat_message, end="\n\n")
         message_hash = hashlib.sha256(concat_message.encode('utf-8')).hexdigest()
@@ -56,7 +79,9 @@ class poll:
         print()
 
         print("\u001b[35;1m(f) Sends m'(blinded message) to signing authority\u001b[0m")
-        signedBlindMessage = self.signer.signMessage(blindMessage, voter.getEligibility())
+        eligible = "y" if self.is_valid_voter(id_number) else "n"
+        print(f"Eligibility status: {eligible}")
+        signedBlindMessage = self.signer.signMessage(blindMessage, eligible)
 
         if signedBlindMessage is None:
             print("\u001b[31;1mINELIGIBLE VOTER....VOTE NOT AUTHORIZED!\u001b[0m")
@@ -93,8 +118,11 @@ class poll:
                 # Save to database
                 self.save_vote(blinded_message=blindMessage, signed_blinded_message=signedBlindMessage, signed_message=signedMessage, n=self.n, e=self.e, message_hash=message_hash, concatenated_message=concat_message)
 
+                # Tandai ID sebagai telah memberikan suara
+                self.mark_voter(id_number)
+
     def save_vote(self, blinded_message, signed_blinded_message, signed_message, n, e, message_hash, concatenated_message):
-        conn = sqlite3.connect('voting.db')
+        conn = self.get_db_connection()
         c = conn.cursor()
         c.execute("INSERT INTO votes (blinded_message, signed_blinded_message, signed_message, n, e, message_hash, concatenated_message) VALUES (?, ?, ?, ?, ?, ?, ?)",
                   (str(blinded_message), str(signed_blinded_message), str(signed_message), str(n), str(e), str(message_hash), concatenated_message))
