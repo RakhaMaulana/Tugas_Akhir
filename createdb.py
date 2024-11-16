@@ -32,8 +32,3 @@ def insert_voter(id_number):
     conn.close()
 
 create_database()
-insert_voter(1)
-insert_voter(2)
-insert_voter(3)
-insert_voter(4)
-insert_voter(5)
