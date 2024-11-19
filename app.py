@@ -53,34 +53,37 @@ def index():
                 text-align: center;
                 margin-top: 20px;
               }
+              .form-section {
+                margin-bottom: 30px;
+              }
             </style>
           </head>
           <body>
             <div class="container">
-              <h1 class="mt-5">Poll</h1>
+              <h1 class="mt-5 text-center">Dont be abstain. Your choice is important :D</h1>
               {% if candidates %}
               <form action="/vote" method="post" class="mt-3">
-                <div class="form-group">
-                  <label for="id_number">ID Number</label>
+                <div class="form-section">
+                  <label for="id_number" class="form-label">ID Number</label>
                   <input type="number" class="form-control" id="id_number" name="id_number" required>
                 </div>
                 <div class="candidate-info">
                   <img id="candidate-photo" class="candidate-photo" src="{{ url_for('uploaded_file', filename=candidates[0][4]) }}" alt="Candidate Photo">
-                  <p id="candidate-name">{{ candidates[0][1] }}</p>
+                  <h5 id="candidate-name">{{ candidates[0][1] }}</h5>
                   <p id="candidate-class">{{ candidates[0][2] }}</p>
                 </div>
-                <div class="form-group">
-                  <label for="poll_answer">Select Candidate</label>
+                <div class="form-section">
+                  <label for="poll_answer" class="form-label">Select Candidate</label>
                   <select class="form-control" id="poll_answer" name="poll_answer" required onchange="updateCandidateInfo()">
                     {% for candidate in candidates %}
                       <option value="{{ candidate[3] }}" data-photo="{{ url_for('uploaded_file', filename=candidate[4]) }}" data-name="{{ candidate[1] }}" data-class="{{ candidate[2] }}">{{ candidate[3] }}</option>
                     {% endfor %}
                   </select>
                 </div>
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="submit" class="btn btn-primary btn-block">Submit</button>
               </form>
               {% else %}
-              <p>No candidates available.</p>
+              <p class="text-center">No candidates available.</p>
               {% endif %}
             </div>
 
@@ -280,13 +283,19 @@ def register_candidate():
     number = int(request.form['number'])
     photo = request.files['photo']
 
+    conn = sqlite3.connect('voting.db')
+    c = conn.cursor()
+    c.execute('SELECT COUNT(*) FROM candidates WHERE number = ?', (number,))
+    if c.fetchone()[0] > 0:
+        conn.close()
+        flash("Candidate number already exists!")
+        return redirect(url_for('admin'))
+
     if photo and allowed_file(photo.filename):
         filename = secure_filename(photo.filename)
         photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         photo_path = filename  # Store only the filename in the database
 
-        conn = sqlite3.connect('voting.db')
-        c = conn.cursor()
         c.execute('INSERT INTO candidates (name, class, number, photo) VALUES (?, ?, ?, ?)', (name, class_, number, photo_path))
         conn.commit()
         conn.close()
@@ -294,6 +303,7 @@ def register_candidate():
         flash("Candidate registered successfully!")
     else:
         flash("Invalid file type. Only PNG, JPG, JPEG, and GIF are allowed.")
+        conn.close()
     return redirect(url_for('admin'))
 
 @app.route('/logout', methods=['POST'])
