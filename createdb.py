@@ -22,6 +22,15 @@ def create_database():
         )
     ''')
     c.execute('''
+        CREATE TABLE IF NOT EXISTS candidates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            class TEXT NOT NULL,
+            number INTEGER NOT NULL,
+            photo TEXT NOT NULL
+        )
+    ''')
+    c.execute('''
         CREATE TABLE IF NOT EXISTS admin (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             password_hash TEXT NOT NULL
