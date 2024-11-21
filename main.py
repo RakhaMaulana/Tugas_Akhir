@@ -21,11 +21,14 @@ class poll:
         """Memeriksa apakah ID terdaftar dan belum memberikan suara"""
         conn = self.get_db_connection()
         c = conn.cursor()
-        c.execute('SELECT has_voted FROM voters WHERE id_number = ?', (id_number,))
+        c.execute('SELECT has_voted, status FROM voters WHERE id_number = ?', (id_number,))
         result = c.fetchone()
         conn.close()
         if result is None:
             print("ID number tidak terdaftar.")
+            return False
+        elif result[1] != 'approved':
+            print("ID number belum disetujui.")
             return False
         elif result[0]:
             print("ID number sudah melakukan voting.")

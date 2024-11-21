@@ -1,5 +1,17 @@
 import sqlite3
 import bcrypt
+from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template_string
+from werkzeug.utils import secure_filename
+import os
+
+app = Flask(__name__)
+app.secret_key = 'supersecretkey'
+app.config['UPLOAD_FOLDER'] = 'uploads'
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def create_database():
     conn = sqlite3.connect('voting.db')
@@ -18,7 +30,9 @@ def create_database():
     c.execute('''
         CREATE TABLE IF NOT EXISTS voters (
             id_number INTEGER PRIMARY KEY,
-            has_voted BOOLEAN NOT NULL DEFAULT 0
+            has_voted BOOLEAN NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'pending',
+            photo TEXT
         )
     ''')
     c.execute('''
